@@ -1,0 +1,62 @@
+
+#Import Crime Data Into Environment
+NYC_CrimeHistory <- NYPD_Complaint_Data_Historic
+table(NYC_CrimeHistory$CMPLNT_FR_DT)
+
+crime_year <- format(as.Date(NYC_CrimeHistory$CMPLNT_FR_DT, format="%m/%d/%Y"),"%Y")
+B<- as.numeric(crime_year)
+crime_year <- data.frame(B)
+
+table(complaint_year)#There was a massive peak of crimes in 2006
+
+crime_hour <- format(as.POSIXct(NYC_CrimeHistory$CMPLNT_FR_TM,format="%H:%M:%S"),"%H")
+A <- as.numeric(crime_hour)
+crime_Hour <- data.frame(A)
+
+NYC_CrimeHistory <- data.frame(NYC_CrimeHistory, crime_year, crime_Hour)
+
+NYC_CrimeHistory2006to2017 <- NYC_CrimeHistory[NYC_CrimeHistory$B >= 2006,]
+NYC_CrimeHistory2006to2017 <- NYC_CrimeHistory2006to2017[NYC_CrimeHistory2006to2017$BORO_NM != "Outside NYC",]
+
+
+#Import Police Misconduct Data Into Environment
+NYC_MisconductComplaint <- ccrb_datatransparencyinitiative_20170207CSV
+
+NYC_MisconductComplaint2006to2017 <- NYC_MisconductComplaint[NYC_MisconductComplaint$`Incident Year` >= 2006,]
+NYC_MisconductComplaint2006to2017<- NYC_MisconductComplaint2006to2017[NYC_MisconductComplaint2006to2017$`Borough of Occurrence`!="Outside NYC",]
+
+#(1ST PLOT)
+#Create an overlapped barplots of the number of crimes and misconducts committed in each borough 
+Crime2006to2017 <- table(NYC_CrimeHistory2006to2017$BORO_NM)
+Misconduct2006to2017 <- table(NYC_MisconductComplaint2006to2017$`Borough of Occurrence`)
+
+par(mar = c(5,5,5,5))
+barplot(Crime2006to2017, las = 1, col = "red", ylim = c(0, 2000000))
+par(new = T)
+barplot(Misconduct2006to2017, las = 1, col = "blue", ylim = c(0, 200000), cex.names = F, 
+        xlab = "Boroughs in NYC", ylab = "Number of Crimes (red) and Police Misconducts (Blue)")
+title(main = "Number of Crimes and Police Misconduct in NYC 2006 - 2017", font.main = 4)
+
+###The barplot shows that the number of police misconduct in different boroughs corresponds with the 
+#amount of crimes committed in the boroughs
+###This means we can use crime and police data to narrow down locations of most disturbance
+
+Crime_Location <- table(NYC_CrimeHistory2006to2017$PREM_TYP_DESC)
+Misconduct_Location <- table(NYC_MisconductComplaint2006to2017$`Incident Location`)
+par(mfrow = c(1, 2))
+
+#Look at pie-charts to see if the crimes and police misconducts are happening at the same places
+
+pie(Crime_Location, labels = unique(NYC_CrimeHistory2006to2017$PREM_TYP_DESC))
+pie(Misconduct_Location, labels = unique(NYC_MisconductComplaint2006to2017$`Incident Location`))
+
+###Police misconducts and crimes are not happening at the same places much. This is not necessarly a bad thing
+#because having two models to predict locations of crime and police misconduct can cover more areas 
+#in predicting where disturbances are likely to happen.
+
+#(2ND PLOT)
+#Look at what time of the day the crimes are happening 
+hist(NYC_CrimeHistory2006to2017$A, ylim = c(0, 600000), xlim = c(0, 25), col = "red", xlab = "Hours", 
+     ylab = "Number of Crimes 2006 - 2017", main = "Amount of Crimes Committed in NYC Every Hour of the Day")
+
+###crimes peak at midnight - 1am and also happens a lot from late afternoon to late evening
